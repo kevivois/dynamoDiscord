@@ -13,10 +13,39 @@ const client = new Client({
     intents: ['DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILDS'] 
   });
 
+const tryConnection = async () => {
+
+    try
+    {
+        await dbclient.close();
+
+        await dbclient.connect();
+
+        var db = await dbclient.db("Dynamo");
+
+        if(!db.collection("server"))
+        {
+            throw new Error("server collection doesnt exist");
+        }
+
+        return true;
+    }
+    catch(error)
+    {
+        console.log(error);
+
+        return false;
+    }
+    
+}
 client.login(config.BOT_TOKEN);
 
 client.on("ready",() => {
     console.log("Bot connecté " + client.user.tag);
+    if(!tryConnection())
+    {
+        client.destroy();
+    }
     
 })
 
@@ -33,13 +62,16 @@ client.on("messageCreate", msg => {
 
 client.on("guildCreate", guild => {
 
-    var guildId = guild.id
-    var name = guild.name
-    var membres = guild.members;
+   
+    var JSON = makeJsonGuild(guild);
+    addGuildIntoDB(JSON);
+
+
+})
+
+const GuildIntoJson = async (guild) => {
 
     var lstMembres = [];
-
-    
 
     membres.cache.forEach(member => {
         
@@ -48,12 +80,10 @@ client.on("guildCreate", guild => {
 
     const JsonData = {id:guild.id,users:lstMembres};
 
-    //console.log(JsonData);
-    addGuildIntoDB(JsonData);
+    return JsonData;
+     
 
-
-    
-})
+};
 
 const addGuildIntoDB = async (guild) => {
     await dbclient.close();

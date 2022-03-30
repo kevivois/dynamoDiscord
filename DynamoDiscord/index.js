@@ -110,6 +110,6 @@ const addGuildIntoDB = async (guild) => {
     
     console.log(insert);
 
-    await dbclient.close()
+    await dbclient.close();
     
 }

@@ -5,6 +5,8 @@ const Discord = require("discord.js");
 const config = require("./config.json");
 const uri = "mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false";
 const dbclient = new MongoClient(uri);
+const dbName = "Dynamo";
+const collectionName = "server";
 
 
 
@@ -21,11 +23,17 @@ const tryConnection = async () => {
 
         await dbclient.connect();
 
-        var db = await dbclient.db("Dynamo");
+        
+        var db = await dbclient.db(dbName);
 
+        if(!db)
+        {
+           MongoClient.connect(`mongodb://localhost:27017/${dbName}`);
+           db = await dbclient.db(dbName);
+        }
         if(!db.collection("server"))
         {
-            throw new Error("server collection doesnt exist");
+            db.createCollection("server");
         }
 
         return true;
@@ -63,7 +71,8 @@ client.on("messageCreate", msg => {
 client.on("guildCreate", guild => {
 
    
-    var JSON = makeJsonGuild(guild);
+    var JSON = GuildIntoJson(guild);
+    
     addGuildIntoDB(JSON);
 
 
@@ -73,7 +82,7 @@ const GuildIntoJson = async (guild) => {
 
     var lstMembres = [];
 
-    membres.cache.forEach(member => {
+    guild.members.cache.forEach(member => {
         
         lstMembres.push({id:member.id,messages:0});
     })
@@ -92,11 +101,15 @@ const addGuildIntoDB = async (guild) => {
 
     var db = await dbclient.db("Dynamo");
    
+    var rowExisting = await db.collection("server").findOne({$where:{"id":guild.id}}) ;
+
+    if(!rowExisting)
+    {
+        var insert = await db.collection("server").insertOne(guild);
+    }
     
-    var insert = await db.collection("server").insertOne(guild);
-    
+    console.log(insert);
 
     await dbclient.close()
-    
     
 }

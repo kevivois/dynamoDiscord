@@ -1,0 +1,29 @@
+{
+  "name": "dynamodiscord",
+  "version": "1.0.0",
+  "description": "Dynamo discord bot ",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://kevivois-admin@bitbucket.org/kevivois/dynamo.git"
+  },
+  "keywords": [
+    "dynamo",
+    "discord",
+    "bot"
+  ],
+  "author": "Kevin Voisin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://bitbucket.org/kevivois/dynamo/issues"
+  },
+  "homepage": "https://bitbucket.org/kevivois/dynamo#readme",
+  "dependencies": {
+    "discord.js": "^13.6.0",
+    "mongodb": "^4.4.1",
+    "mongoose": "^6.2.9"
+  }
+}

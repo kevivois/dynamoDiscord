@@ -175,7 +175,6 @@ const tryConnection = async () => {
         await dbclient.connect();
        
         var db = await dbclient.db(dbName);
-
         if(!db)
         {
            MongoClient.connect(`mongodb://localhost:27017/${dbName}`);

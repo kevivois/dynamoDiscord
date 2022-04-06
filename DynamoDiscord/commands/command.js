@@ -33,15 +33,15 @@ module.exports = {
                 return await interaction.reply({content:"you don't have the permission to do that !",ephemeral:true});
             }
             const description = (interaction.options.get("description") ? interaction.options.get("description").value : "a custom command")
-            const command = {name:interaction.options.get("name").value,description:description,content:interaction.options.get("content").value};
+            const command = {name:interaction.options.get("name").value.toLowerCase(),description:description,content:interaction.options.get("content").value};
             var insertCommand = await dbclient.db("Dynamo").collection("guild").updateOne({"id":interaction.guild.id},{$push:{"commands":command}});
             console.log("created a new command into DB guild " + interaction.guild.name,Date.now());
             await dbclient.close();
             
 
             // reload,add command of the specific server
-            const Slashcommand = new SlashCommandBuilder().setName(interaction.options.get("name").value)
-                                                     .setDescription(description);
+            const Slashcommand = new SlashCommandBuilder().setName(interaction.options.get("name").value.toLowerCase())
+                                                     .setDescription(description.toLowerCase());
 
             await addCommandToGuild(interaction.guild.id,Slashcommand);
                                                   

@@ -432,16 +432,16 @@ client.on('interactionCreate', async interaction => {
          let options = []
          if(guild.commands.find(cmd => cmd.name == interaction.commandName))
          {
-            options.push(cmd.name);
+            options.push(interaction.commandName);
             await dbclient.close();
-             client.commands.get(interaction.commandName).execute(interaction,options,dbclient)
+             await client.commands.get(interaction.commandName).execute(interaction,options,dbclient)
          }
          options = []
          if(client.commands.get(interaction.commandName).length > 0 )
          {
             for (let arg of client.commands.get(interaction.commandName).args) options.push(interaction.options.get(arg).value)
          }
-        client.commands.get(interaction.commandName).execute(interaction,options,dbclient,client);
+        await client.commands.get(interaction.commandName).execute(interaction,options,dbclient,client);
 
         await dbclient.close();
 

@@ -8,8 +8,8 @@ const  config = require("../config.json");
 
 module.exports = {
     name:"custom",
-    description:"",
-   // args:["name"],
+    description:"custom command ",
+    args:["name"],
     /**
      * 
      * @param {Discord.CommandInteraction} interaction 

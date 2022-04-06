@@ -7,7 +7,6 @@ const fs = require('fs');
 
 const Discord = require("discord.js");
 const config = require("./config.json");
-const { args } = require('./commands/createCustom');
 const uri = "mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false";
 const dbclient = new MongoClient(uri);
 const dbName = "Dynamo";
@@ -24,23 +23,52 @@ const client = new Client({
   client.commands = new Discord.Collection();
 
 
-for(const file of commandFiles)
-     {
-         try{
+    for(const file of commandFiles)
+    {
+        try{
             const command = require(`./commands/${file}`);
             client.commands.set(command.name,command);
-         }
-         catch(error)
-         {
-             console.log(error);
-         }
-     }
+        }
+        catch(error)
+        {
+            console.log(error);
+        }
+    }
+    console.log(client.commands);
+
+    
+    const addCommandsToClient = async () => {
+
+       
+        await dbclient.connect();
+
+        const collection = await dbclient.db(dbName).collection(collectionName);
+        const guilds = await collection.find({});
+        
+        
+        guilds.forEach(async guild => {
+
+            for(cmd of guild.commands)
+            {
+                
+                 await client.commands.set(cmd.name,require("./commands/custom"));
+            }
+        });
+        
+        
+    }
+
+       
+   
 
 
 
 
+    addCommandsToClient();
 
-  CommandsConfiguration();
+
+    CommandsConfiguration();
+
 
 
 
@@ -64,7 +92,21 @@ client.on("messageCreate", async msg => {
     await dbclient.connect();
     var guild = await dbclient.db(dbName).collection(collectionName).findOne({id:msg.guild.id});
     
-    var users = guild.users;
+    if(!guild)
+    {
+        tryConnection();
+        await dbclient.connect();
+        
+        guild = await dbclient.db(dbName).collection(collectionName).findOne({id:msg.guild.id});
+        if(!guild)
+        {
+            await addGuildIntoDB(msg.guild);
+            guild = await dbclient.db(dbName).collection(collectionName).findOne({id:msg.guild.id});
+        }
+    }
+        var users = guild.users;
+
+   
     var user;
     users.forEach(usr => {
 
@@ -170,27 +212,36 @@ const tryConnection = async () => {
 
     try
     {
+        
         await dbclient.close();
 
         await dbclient.connect();
        
+        
+        
+        
         var db = await dbclient.db(dbName);
-        if(!db)
+  
+        if(!dbclient.db("Dynamo"))
         {
-           MongoClient.connect(`mongodb://localhost:27017/${dbName}`);
-           db = await dbclient.db(dbName);
+            
+            MongoClient.connect(`mongodb://localhost:27017/${dbName}`);
+            db = await dbclient.db(dbName);
         }
-        if(!db.collection(collectionName))
+        var collections = await db.collections();
+        if(collections.filter(c => c.dbName == "Dynamo").length == 0)
         {
-            db.createCollection(collectionName);
+            await db.createCollection(collectionName);  
         }
-        await dbclient.close();
+        await dbclient.close();  
+
+
         return true;
     }
     catch(error)
     {
         console.log(error);
-
+        await dbclient.close();
         return false;
     }
     
@@ -288,11 +339,39 @@ async function CommandsConfiguration()
 
     await dbclient.connect();
 
+    var guilds = await dbclient.db(dbName).collection(collectionName).find({}).toArray();
     
 
+    GlobalCommands = [
+        new SlashCommandBuilder().setName("command").setDescription("Command management")
+        .addSubcommand(cmd => 
+            cmd
+            .setName("create")
+            .setDescription("Create a custom command")
+            .addStringOption(new SlashCommandStringOption().setName("name").setDescription("name of the command").setRequired(true))
+            .addStringOption(new SlashCommandStringOption().setName("content").setDescription("content of the command").setRequired(true))
+            .addStringOption(new SlashCommandStringOption().setName("description").setDescription("description of the command"))
+        )
+    ];
 
-    var guilds = await dbclient.db(dbName).collection(collectionName).find({}).toArray();
-    await dbclient.close();
+    (async () => {
+        try{
+            console.log("commands are refreshing");
+
+            await rest.put(
+                // Routes.applicationGuildCommands(config.APP_ID,DynamoGuildId),  
+                Routes.applicationGuildCommands(config.APP_ID,DynamoGuildId),  
+                {
+                    body:GlobalCommands
+                },
+            );
+            console.log("Commands are successfully reloaded");
+        }
+        catch(error)
+        {
+            console.log(error);
+        }
+    })
 
     for(guild of guilds)
     {
@@ -307,32 +386,10 @@ async function CommandsConfiguration()
         {
             //name,description,content
             
-            Customcommands.push(new SlashCommandBuilder().setName(cmd.name).setDescription(cmd.description));
+            Customcommands.push(new SlashCommandBuilder().setName(cmd.name).setDescription((cmd.description != "" ? cmd.description : "a custom command" )));
             
         }
 
-        GlobalCommands = [
-            new SlashCommandBuilder().setName("create").setDescription("Create a custom command")
-            .addStringOption(new SlashCommandStringOption().setName("keyword").setDescription("keyword for custom command").setRequired(true))
-        ];
-
-        (async () => {
-            try{
-                console.log("commands are refreshing");
-
-                await rest.put(
-                    Routes.applicationGuildCommands(config.APP_ID,DynamoGuildId),  
-                    {
-                        body:GlobalCommands
-                    },
-                );
-                console.log("Commands are successfully reloaded");
-            }
-            catch(error)
-            {
-                console.log(error);
-            }
-        })
 
         (async () => {
             try{
@@ -358,24 +415,35 @@ async function CommandsConfiguration()
             }
         })
     }
-
+    await dbclient.close();
 
 }
 
-
-
-
 client.on('interactionCreate', async interaction => {
+    
     if (!interaction.isCommand()) return;
+    console.log(client.commands.has(interaction.commandName))
      if (!client.commands.has(interaction.commandName)) return;
-
      try
      {
+         await dbclient.close();
+         await dbclient.connect();
+         const guild = await dbclient.db(dbName).collection(collectionName).findOne({id:interaction.guild.id})
+         let options = []
+         if(guild.commands.find(cmd => cmd.name == interaction.commandName))
+         {
+            options.push(cmd.name);
+            await dbclient.close();
+             client.commands.get(interaction.commandName).execute(interaction,options,dbclient)
+         }
+         options = []
+         if(client.commands.get(interaction.commandName).length > 0 )
+         {
+            for (let arg of client.commands.get(interaction.commandName).args) options.push(interaction.options.get(arg).value)
+         }
+        client.commands.get(interaction.commandName).execute(interaction,options,dbclient,client);
 
-     
-        let options = []
-        for (let arg of client.commands.get(interaction.commandName).args) options.push(interaction.options.get(arg).value)
-        client.commands.get(interaction.commandName).execute(interaction,options);
+        await dbclient.close();
 
      }
      catch(error)
@@ -388,6 +456,12 @@ client.on('interactionCreate', async interaction => {
      
       
 })
+
+/*dbclient.on("connectionReady",() => {
+    dbclient.connect();
+
+})
+*/
 
 client.login(config.BOT_TOKEN);
 

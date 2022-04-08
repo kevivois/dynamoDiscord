@@ -354,7 +354,7 @@ async function CommandsConfiguration()
         )
     ];
 
-    (async () => {
+    
         try{
             console.log("commands are refreshing");
 
@@ -371,7 +371,7 @@ async function CommandsConfiguration()
         {
             console.log(error);
         }
-    })
+   
 
     for(guild of guilds)
     {
@@ -385,16 +385,19 @@ async function CommandsConfiguration()
         for(cmd of guildCommands)
         {
             //name,description,content
-            
-            Customcommands.push(new SlashCommandBuilder().setName(cmd.name).setDescription((cmd.description != "" ? cmd.description : "a custom command" )));
+           const SlashCommand = new SlashCommandBuilder().setName(cmd.name).setDescription((cmd.description != "" ? cmd.description : "a custom command"));
+           console.log(SlashCommand);
+            await  Customcommands.push(SlashCommand);
             
         }
 
 
-        (async () => {
+        
             try{
-                console.log("commands are refreshing");
+                 console.log("commands are refreshing");
 
+                 
+                
                 /*
                 Global commands
 
@@ -413,7 +416,7 @@ async function CommandsConfiguration()
             {
                 console.log(error);
             }
-        })
+       
     }
     await dbclient.close();
 
@@ -422,7 +425,7 @@ async function CommandsConfiguration()
 client.on('interactionCreate', async interaction => {
     
     if (!interaction.isCommand()) return;
-    console.log(client.commands.has(interaction.commandName))
+    
      if (!client.commands.has(interaction.commandName)) return;
      try
      {
@@ -430,20 +433,24 @@ client.on('interactionCreate', async interaction => {
          await dbclient.connect();
          const guild = await dbclient.db(dbName).collection(collectionName).findOne({id:interaction.guild.id})
          let options = []
-         if(guild.commands.find(cmd => cmd.name == interaction.commandName))
+         if(guild.commands.find(cmd => cmd.name == interaction.commandName) != null)
          {
             options.push(interaction.commandName);
             await dbclient.close();
              await client.commands.get(interaction.commandName).execute(interaction,options,dbclient)
          }
-         options = []
-         if(client.commands.get(interaction.commandName).length > 0 )
+         else
          {
-            for (let arg of client.commands.get(interaction.commandName).args) options.push(interaction.options.get(arg).value)
-         }
-        await client.commands.get(interaction.commandName).execute(interaction,options,dbclient,client);
+            options = []
+            if(client.commands.get(interaction.commandName).length > 0 )
+            {
+                for (let arg of client.commands.get(interaction.commandName).args) options.push(interaction.options.get(arg).value)
+            }
+            await client.commands.get(interaction.commandName).execute(interaction,options,dbclient,client);
 
-        await dbclient.close();
+            await dbclient.close();
+         }
+         
 
      }
      catch(error)

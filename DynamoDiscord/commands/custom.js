@@ -18,8 +18,25 @@ module.exports = {
      */
     async execute(interaction,args,dbclient)
     {
-        await interaction.reply({content:args[0]});
+        if(interaction)
+        {
+            await interaction.deferReply();
+            await dbclient.connect();
+            const a = false;
+            const guild = await dbclient.db("Dynamo").collection("guild").findOne({id:interaction.guild.id});
+             console.log(guild.commands);
+            if(a)
+            {
+               
+                 await interaction.editReply({content:command.content})
+            }
+            else
+            {
+                //await interaction.guild.commands?.delete({name:interaction.commandName});
+               
+                 await interaction.editReply({content:"command doesn't exist"});
+            }
+            await dbclient.close();
+        }
     }
-       
-    
 }

@@ -428,7 +428,8 @@ client.on('interactionCreate', async interaction => {
     
      if (!client.commands.has(interaction.commandName)) return;
      try
-     {
+     {   
+         if(!interaction)return;
          await dbclient.close();
          await dbclient.connect();
          const guild = await dbclient.db(dbName).collection(collectionName).findOne({id:interaction.guild.id})

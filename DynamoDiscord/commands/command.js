@@ -43,7 +43,9 @@ module.exports = {
                     await interaction.reply({content:"command name alreay existing !",ephemeral:true});
                 }
                 const description = (interaction.options.get("description") ? interaction.options.get("description").value : "a custom command")
-                const command = {name:interaction.options.get("name").value.toLowerCase(),description:description,content:interaction.options.get("content").value};
+
+                const command = {name:interaction.options.get("name").value.toLowerCase(),description:description,content:interaction.options.get("content").value,creator:interaction.user.id};
+                
                 var insertCommand = await dbclient.db("Dynamo").collection("guild").updateOne({"id":interaction.guild.id},{$push:{"commands":command}});
                 console.log("created a new command into DB guild " + interaction.guild.name,Date.now());
                 await dbclient.close();
@@ -63,8 +65,9 @@ module.exports = {
         }
         catch(error)
         {
+            console.log(error);
             await dbclient.close();
-           // await interaction.reply({content:"error !",ephemeral:true});
+            await interaction.reply({content:"error !",ephemeral:true});
         }
          
         
@@ -82,34 +85,8 @@ module.exports = {
  */
 const addCommandToGuild = async(interaction,command) => {
 
-    const rest = new REST({ version: '9' }).setToken(config.BOT_TOKEN);
-    const  test = new SlashCommandBuilder();
-    test.name
-    test.description
-
     
-    const array = []
-    array.concat(interaction.guild.commands);
-    array.push(command);
-    
-    
-	try {
-		console.log('Command added to the server.');
+    await interaction.guild.commands?.create(command.toJSON());
 
-        /*
-         await rest.put(Routes.applicationGuildCommands(config.APP_ID,interaction.guild.id),
-         { body: array },
-        */
-		
-
-         await rest.put(Routes.applicationGuildCommands(config.APP_ID,interaction.guild.id),
-         { body: array },
-         
-     );
-
-		console.log('Commands reloaded.');
-	} catch (error) {
-		console.error(error);
-	}
     
 }

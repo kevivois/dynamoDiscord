@@ -12,31 +12,13 @@ module.exports = {
     args:["name"],
     /**
      * 
-     * @param {Discord.CommandInteraction} interaction 
-     * @param {String[]} args 
+     * @param {String} prefix 
+     * @param {Discord.Message} message 
      * @param {MongoClient} dbclient
      */
-    async execute(interaction,args,dbclient)
+    async execute(prefix,message,dbclient)
     {
-        if(interaction)
-        {
-            await interaction.deferReply();
-            await dbclient.connect();
-            const a = false;
-            const guild = await dbclient.db("Dynamo").collection("guild").findOne({id:interaction.guild.id});
-             console.log(guild.commands);
-            if(a)
-            {
-               
-                 await interaction.editReply({content:command.content})
-            }
-            else
-            {
-                //await interaction.guild.commands?.delete({name:interaction.commandName});
-               
-                 await interaction.editReply({content:"command doesn't exist"});
-            }
-            await dbclient.close();
-        }
+        const cmd = message.content;
+       return message.reply("test")
     }
 }

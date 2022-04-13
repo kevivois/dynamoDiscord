@@ -4,6 +4,7 @@ const { MongoClient } = require("mongodb");
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
+const prefixs = ["!",".",",",":",";","-","_","+","*","#","%","&","|","?","<",">"]
 
 const Discord = require("discord.js");
 const config = require("./config.json");
@@ -50,8 +51,7 @@ const client = new Client({
 
             for(cmd of guild.commands)
             {
-                
-                 await client.commands.set(cmd.name,require("./commands/custom"));
+                 await client.commands.set(cmd.prefix+cmd.name,require("./commands/custom"));
             }
         });
         
@@ -124,9 +124,38 @@ client.on("messageCreate", async msg => {
     var message = {id:msg.id,date:date.getTime()}
 
     // insert message into db
-    var insertmessage = await dbclient.db(dbName).collection(collectionName).updateOne({"id":msg.guild.id,"users.id":user.id},{$push:{"users.$.messages":message}});
+
+    
+    if(!client.commands.has(msg.content)) var insertmessage = await dbclient.db(dbName).collection(collectionName).updateOne({"id":msg.guild.id,"users.id":user.id},{$push:{"users.$.messages":message}});
 
     console.log("inserting message into db",insertmessage);
+
+
+    // check if it's a command with personalisate prefix
+
+    var prefix = msg.content.substring(0,1);
+    var command = prefixs.filter(pr => pr === prefix)  ? msg.content.substring(1,10) : null;
+    
+    if(!command) return ;
+
+   //const guild = await dbclient.db(dbName).collection(collectionName).findOne({id:msg.guild.id});
+
+    const commands = guild.commands;
+   
+    if(commands.filter(cmd => cmd.prefix === prefix && cmd.name === command ).length == 0)
+    {
+        return;
+    }
+    
+    const cmd = commands.find(cmd => cmd.prefix === prefix && cmd.name === command );
+    await console.log(cmd,"a")   
+   // if(!fetchCommand) return;
+    
+    //await client.commands.get(command).execute(prefix,msg,dbclient);
+
+    
+
+
 
 })
 
@@ -348,18 +377,19 @@ async function CommandsConfiguration()
             cmd
             .setName("create")
             .setDescription("Create a custom command")
-            .addStringOption(new SlashCommandStringOption().setName("name").setDescription("name of the command").setRequired(true))
+            .addStringOption(new SlashCommandStringOption().setName("name").setDescription("name of the command with the prefix").setRequired(true))
             .addStringOption(new SlashCommandStringOption().setName("content").setDescription("content of the command").setRequired(true))
             .addStringOption(new SlashCommandStringOption().setName("description").setDescription("description of the command"))
-        )
+        ).addSubcommand(cmd =>
+            cmd
+            .setName("list")
+            .setDescription("list all custom commands"))
     ];
-
-    
         try{
             console.log("commands are refreshing");
 
             await rest.put(
-                // Routes.applicationGuildCommands(config.APP_ID,DynamoGuildId),  
+                // Routes.applicationCommands(config.APP_ID) : in all discord servers,  
                 Routes.applicationGuildCommands(config.APP_ID,DynamoGuildId),  
                 {
                     body:GlobalCommands
@@ -373,52 +403,7 @@ async function CommandsConfiguration()
         }
    
 
-    for(guild of guilds)
-    {
 
-    
-        var guildCommands = guild.commands;
-        let Customcommands = [];
-        let GlobalCommands = [];
-        //commands.map(command => command.toJSON());
-
-        for(cmd of guildCommands)
-        {
-            //name,description,content
-           const SlashCommand = new SlashCommandBuilder().setName(cmd.name).setDescription((cmd.description != "" ? cmd.description : "a custom command"));
-           console.log(SlashCommand);
-            await  Customcommands.push(SlashCommand);
-            
-        }
-
-
-        
-            try{
-                 console.log("commands are refreshing");
-
-                 
-                
-                /*
-                Global commands
-
-                Routes.applicationGuildCommands(client.user.id),{body:commands};
-                */
-
-                await rest.put(
-                    Routes.applicationGuildCommands(config.APP_ID,guild.id),  
-                    {
-                        body:Customcommands
-                    },
-                );
-                console.log("Commands are successfully reloaded");
-            }
-            catch(error)
-            {
-                console.log(error);
-            }
-       
-    }
-    await dbclient.close();
 
 }
 
@@ -434,23 +419,22 @@ client.on('interactionCreate', async interaction => {
          await dbclient.connect();
          const guild = await dbclient.db(dbName).collection(collectionName).findOne({id:interaction.guild.id})
          let options = []
-         if(guild.commands.find(cmd => cmd.name == interaction.commandName) != null)
-         {
-            options.push(interaction.commandName);
-            await dbclient.close();
-             await client.commands.get(interaction.commandName).execute(interaction,options,dbclient)
-         }
-         else
-         {
-            options = []
-            if(client.commands.get(interaction.commandName).length > 0 )
-            {
-                for (let arg of client.commands.get(interaction.commandName).args) options.push(interaction.options.get(arg).value)
-            }
+         
+           
+                for (let arg of client.commands.get(interaction.commandName).args){
+                    if(interaction.options.get(arg))
+                    {
+                        options.push(interaction.options.get(arg).value);
+                    }
+                    
+                } 
+            
+            
+            
             await client.commands.get(interaction.commandName).execute(interaction,options,dbclient,client);
 
             await dbclient.close();
-         }
+         
          
 
      }

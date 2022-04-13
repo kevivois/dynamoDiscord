@@ -9,7 +9,7 @@ const  config = require("../config.json");
 module.exports = {
     name:"command",
     description:"",
-    args:["name","content"],
+    args:["prefix","name","content"],
     /**
      * 
      * @param {Discord.CommandInteraction} interaction 
@@ -19,6 +19,8 @@ module.exports = {
      */
     async execute(interaction,args,dbclient,client)
     {
+
+        const prefixs = ["!",".",",",":",";","-","_","+","*","#","%","&","|","?","<",">"]
         try {
 
         
@@ -36,27 +38,28 @@ module.exports = {
                     await interaction.reply({content:"you don't have the permission to do that !",ephemeral:true});
                 }
 
-                var isExistingRow = await dbclient.db("Dynamo").collection("guild").findOne({id:interaction.guild.id,commands:{name:interaction.options.get("name")}});
+                const prefix = prefixs.filter(pr => pr === interaction.options.get("name").value.substring(0,1)) ? interaction.options.get("name").value.substring(0,1) : null;
+
+                if(!prefix)
+                {
+                    await dbclient.close();
+                    return interaction.reply("invalid prefix !");
+                }
+
+                var isExistingRow = await dbclient.db("Dynamo").collection("guild").findOne({id:interaction.guild.id,commands:{prefix:prefix,name:interaction.options.get("name")}});
 
                 if(isExistingRow)
                 {
                     await interaction.reply({content:"command name alreay existing !",ephemeral:true});
                 }
                 const description = (interaction.options.get("description") ? interaction.options.get("description").value : "a custom command")
+                const commandWithOutPrefix = interaction.options.get("name").value.toLowerCase().substring(1,interaction.options.get("name").value.length);
 
-                const command = {name:interaction.options.get("name").value.toLowerCase(),description:description,content:interaction.options.get("content").value,creator:interaction.user.id};
+                const command = {prefix:prefix,name:commandWithOutPrefix,description:description,content:interaction.options.get("content").value,creator:interaction.user.id};
                 
                 var insertCommand = await dbclient.db("Dynamo").collection("guild").updateOne({"id":interaction.guild.id},{$push:{"commands":command}});
                 console.log("created a new command into DB guild " + interaction.guild.name,Date.now());
                 await dbclient.close();
-                
-
-                // reload,add command of the specific server
-                const Slashcommand = new SlashCommandBuilder().setName(interaction.options.get("name").value.toLowerCase())
-                                                        .setDescription(description.toLowerCase());
-
-                await addCommandToGuild(interaction,Slashcommand);
-                                                    
                 await client.commands.set(command.name,require("./custom"));
                 await interaction.reply({content:"command well created !",ephemeral:true});
             }
@@ -77,16 +80,4 @@ module.exports = {
 
 
 
-}
-/**
- * 
- * @param {SlashCommandBuilder} command 
- * @param {Discord.CommandInteraction} interaction 
- */
-const addCommandToGuild = async(interaction,command) => {
-
-    
-    await interaction.guild.commands?.create(command.toJSON());
-
-    
 }

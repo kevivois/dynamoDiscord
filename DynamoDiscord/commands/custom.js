@@ -14,11 +14,14 @@ module.exports = {
      * 
      * @param {String} prefix 
      * @param {Discord.Message} message 
-     * @param {MongoClient} dbclient
+     * @param {import("mongodb").WithId} guild
+     * @param {any{}} cmd
      */
-    async execute(prefix,message,dbclient)
+    async execute(prefix,message,guild,cmd)
     {
-        const cmd = message.content;
-       return message.reply("test")
+        
+        return await message.reply({content:cmd.content});
+      
+
     }
 }

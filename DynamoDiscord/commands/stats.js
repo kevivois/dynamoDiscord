@@ -21,14 +21,41 @@ module.exports = {
     {
         var date = new Date(Date.now());
         const prefixs = ["!",".",",",":",";","-","_","+","*","#","%","&","|","?","<",">"]
+        const sliceHours = [0,3,6,9,12,15,18,21,24]
+
+
+      /**
+       * @param {any{}} guildUser
+       */
+        const activesHours = await (guildUser)
+        {
+          const messages = guildUser.messages;
+          const lstHours = [];
+
+          for(const msg in messages)
+          {
+            const date = new Date(msg.date);
+            const hour = date.getHours();
+            lstHours.push(hour);
+
+           // get most active hour
+          }
+        }
         /**
          * 
          * @param {Discord.User} discordUser utilisateur de discord
          * @param {any{}} guildUser utilisateur de la base de donnée
          */
         const statsEmbed = async (discordUser,guildUser) => {
-            const embed = {
-                "title": `@${discordUser.username} stats `,
+            const joinedAt = new Date(guildUser.joinedAt);
+            const dateToString = `${joinedAt.getDay()}.${joinedAt.getMonth()}.${joinedAt.getFullYear().toString().substring(1,3)}`
+            const activesHours = await activesHours(guildUser);
+            const difference =  new Date(Date.now()).getTime() - joinedAt.getTime();
+
+            var days = Math.ceil(difference / (1000 * 3600 * 24));
+
+            const embed = await {
+                "title": `Specific user stats `,
                 "url": "https://discordapp.com",
                 "color": 8192236,
                 "timestamp": `${new Date(Date.now()).toDateString()}`,
@@ -44,11 +71,11 @@ module.exports = {
                 "fields": [
                   {
                     "name": "messages",
-                    "value": `Vous avez écris ${guildUser.messages.length} messages depuis votre arrivée, ${discordUser}`
+                    "value": `Vous avez écris ${guildUser.messages.length} messages depuis votre arrivée`
                   },
                   {
                     "name": "Activitée",
-                    "value": "Cela fait une moyenne de @moyenne par jour "
+                    "value": `Cela fait une moyenne ${guildUser.messages.length / days} par jour `
                   },
                   {
                     "name": "🙄",
@@ -59,6 +86,7 @@ module.exports = {
 
               return embed;
         };
+
         try
         {
 
@@ -80,7 +108,7 @@ module.exports = {
 
                         const embed = await statsEmbed(discordUser,guildUser);
                         
-                        await interaction.channel.send({content:"Here your stats !",embeds:[embed]});
+                        await interaction.reply({content:`${discordUser} - Here your stats !`,embeds:[embed]});
                     }
                     
                 }
@@ -98,6 +126,7 @@ module.exports = {
                         await interaction.reply({content:"you don't have the permission to do that !",ephemeral:true});
                     }
                 }
+
             }
             catch(error)
             {

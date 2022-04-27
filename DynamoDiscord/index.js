@@ -187,13 +187,13 @@ const addGuildIntoDB = async (guild) => {
 
         await membres.forEach(async member => {
             if (member.id != client.user.id) {
-                await lstMembres.push({ id: member.id, messages: [] });
+                await lstMembres.push({ id: member.id, messages: [] ,joinedAt:Date.now()});
             }
 
         })
 
 
-        const JsonData = { id: guild.id, users: lstMembres, commands: [], data: [] };
+        const JsonData = { id: guild.id, users: lstMembres, commands: [], data: [],createAt:Date.now()};
 
         await dbclient.close();
 
@@ -310,7 +310,7 @@ const addMemberIntoDB = async (member) => {
     var query = await db.updateOne({ "id": member.guild.id, }, {
         $push: {
             "users":
-                { id: member.id, messages: [] }
+                { id: member.id, messages: [],joinedAt:Date.now()}
 
         }
     });

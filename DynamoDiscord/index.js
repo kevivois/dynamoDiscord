@@ -70,7 +70,7 @@ client.on("ready", () => {
 // ajout du message dans la BD
 client.on("messageCreate", async msg => {
 
-
+    
     if (msg.author.id == client.user.id) return;
     await dbclient.connect();
     var guild = await dbclient.db(dbName).collection(collectionName).findOne({ id: msg.guild.id });
@@ -194,7 +194,7 @@ const addGuildIntoDB = async (guild) => {
 
 
         const JsonData = { id: guild.id, users: lstMembres, commands: [], data: [],createAt:Date.now()};
-
+        
         await dbclient.close();
 
         await dbclient.connect();

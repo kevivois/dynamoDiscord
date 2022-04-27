@@ -21,52 +21,97 @@ module.exports = {
     {
         var date = new Date(Date.now());
         const prefixs = ["!",".",",",":",";","-","_","+","*","#","%","&","|","?","<",">"]
-        const sliceHours = [0,3,6,9,12,15,18,21,24]
+        var sliceHours = [{h:0,l:[]},{h:3,l:[]},{h:6,l:[]},{h:9,l:[]},{h:12,l:[]},{h:15,l:[]},{h:18,l:[]},{h:21,l:[]}];
 
 
       /**
        * @param {any{}} guildUser
        */
-        const activesHours = await (guildUser)
+        const activesHours = async (guildUser) =>
         {
           const messages = guildUser.messages;
-          const lstHours = [];
 
-          for(const msg in messages)
+          for(var msg of messages)
           {
             const date = new Date(msg.date);
             const hour = date.getHours();
-            lstHours.push(hour);
+           
+            for(i = 3; i <= 24;i+= 3)
+            {
+              
+              if(hour >= i && hour  < i+3 )
+              {
+                
+                var obj = sliceHours.find(hh => i == hh.h);
+
+                if(i == 24)
+                {
+                  obj = sliceHours.find(hh => hh.h == 0);
+                }
+                
+               // var nextObj = sliceHours.find(hh => (i+3) == hh.h);
+                
+                sliceHours.at(sliceHours.indexOf(obj)).l.push({t:date})
+                
+              }
+            }
 
            // get most active hour
+
+           
           }
+          
+          var max = sliceHours[0];
+         sliceHours.forEach(slc => {
+            if(slc.l.length > max.l.length)
+            {
+              max = slc;
+            }
+            console.log(max.h);
+         })
+        var sum = 0;
+         max.l.forEach(m => {
+          // console.log (new Date(m.t).toTimeString());
+          date = new Date(m.t);
+           sum += (date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60);
+           
+         })
+         var avg = sum / max.l.length - 1;
+         
+         const realAvg = (Math.floor(avg / 60)) + ":" + Math.floor(avg % 60) + ":" + Math.floor((avg % 60 - parseInt(avg % 60))*60);
+         //console.log((avg/60 - parseInt(avg/60))*60);
+         
+         return await {maximum:max.h,average:realAvg}
+
         }
         /**
          * 
-         * @param {Discord.User} discordUser utilisateur de discord
+         * @param {Discord.GuildMember} discordUser utilisateur de discord
          * @param {any{}} guildUser utilisateur de la base de donnée
          */
         const statsEmbed = async (discordUser,guildUser) => {
-            const joinedAt = new Date(guildUser.joinedAt);
+            const joinedAt = new Date(discordUser.joinedAt);
             const dateToString = `${joinedAt.getDay()}.${joinedAt.getMonth()}.${joinedAt.getFullYear().toString().substring(1,3)}`
-            const activesHours = await activesHours(guildUser);
             const difference =  new Date(Date.now()).getTime() - joinedAt.getTime();
-
+            
             var days = Math.ceil(difference / (1000 * 3600 * 24));
-
+            const mostActivesHours = await activesHours(guildUser);
+            const average = Math.round((guildUser.messages.length / days)*100)/100;
+           // console.log(discordUser.user.avatarURL({size:4096,format:"png"}),interaction.guild.client.user.avatarURL({format:"png",size:4096}));
+            
             const embed = await {
-                "title": `Specific user stats `,
+                "title": `Here your stats `,
                 "url": "https://discordapp.com",
                 "color": 8192236,
-                "timestamp": `${new Date(Date.now()).toDateString()}`,
+                "timestamp": `${new Date(Date.now()).toLocaleDateString("fr-FR")}`,
                 "footer": {
-                  "icon_url": "https://cdn.discordapp.com/embed/avatars/0.png",
-                  "text": `Dynamo bot |${Date.now()}`
+                  "icon_url": `${interaction.guild.client.user.avatarURL({format:"png",size:4096})}`,
+                  "text": `${interaction.guild.client.user.username} | ${new Date(Date.now()).toLocaleDateString("fr-FR")}`
                 },
                 "author": {
-                  "name": `${interaction.guild.client.user.username}`,
-                  "url": "https://discordapp.com",
-                  "icon_url": "https://cdn.discordapp.com/embed/avatars/0.png"
+                  "name": `${discordUser.user.username}`,
+                  "url":"https://discordapp.com",
+                  "icon_url": `${discordUser.user.avatarURL({size:4096,format:"png"})}`
                 },
                 "fields": [
                   {
@@ -75,7 +120,8 @@ module.exports = {
                   },
                   {
                     "name": "Activitée",
-                    "value": `Cela fait une moyenne ${guildUser.messages.length / days} par jour `
+                    "value": `Cela fait une moyenne ${average} messages par jour depuis votre arrivée ( ${discordUser.joinedAt.toLocaleDateString("fr-FR")}) \n
+                    Vous êtes le plus actifs entre ${mostActivesHours.maximum} et ${mostActivesHours.maximum + 3 } heures, en moyenne ${mostActivesHours.average}`
                   },
                   {
                     "name": "🙄",
@@ -98,8 +144,9 @@ module.exports = {
                 if(interaction.options.getSubcommand() === "me")
                 {
                     
-                    const discordUser = interaction.user;
-
+                    const discordUser = interaction.member;
+                    
+                    
                     const guild = await dbclient.db(dbName).collection(collectionName).findOne({id:interaction.guild.id});
 
                     if(guild.users.find(us => us.id === discordUser.id))
@@ -108,7 +155,7 @@ module.exports = {
 
                         const embed = await statsEmbed(discordUser,guildUser);
                         
-                        await interaction.reply({content:`${discordUser} - Here your stats !`,embeds:[embed]});
+                        await interaction.reply({content:`\n`,embeds:[embed]});
                     }
                     
                 }

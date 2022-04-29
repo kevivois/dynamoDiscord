@@ -108,6 +108,17 @@ module.exports = {
                 label: 'Activitée ( % )',
                 data: data
               }]
+            },
+            options: {
+              scales:{
+                yAxes: [{
+                  ticks: {
+                    min: 0,
+                    max: 100,
+                    stepSize: 20
+                  }
+                }]
+              }
             }
           }
 
@@ -133,11 +144,16 @@ module.exports = {
             const average = Math.round((guildUser.messages.length / days)*100)/100;
             
             const chartData = [];
-
+            var totalMessages = 0;
             for(const t of mostActivesHours.sliceHours)
             {
               
-              chartData.push(t.l.length*10);
+              totalMessages += t.l.length;
+            }
+            for(const t of mostActivesHours.sliceHours)
+            {
+              
+              chartData.push((t.l.length/totalMessages)*100);
             }
 
 
@@ -199,12 +215,27 @@ module.exports = {
          data.sort((a,b) => a.amount - b.amount);
          data.reverse();
         const stringDatas = [];
-         
-        for(const dt of data)
-        {
-          const user = await discordGuild.members.fetch(dt.user);
+
+        const ToStringData = async (dt) =>  {
+          
+            const user = await discordGuild.members.fetch((String(dt.user).toString()));
           stringDatas.push({name:user.displayName,value:String("Messages : " + dt.amount),inline:false})
+          
+        } 
+        try
+        {
+          for(const dt of data)
+        {
+          await ToStringData(dt);
         }
+      }
+      catch(error)
+      {
+        console.log(error);
+      }
+       
+        
+        
         
         // sequelize
         //https://discordjs.guide/sequelize/#connection-information

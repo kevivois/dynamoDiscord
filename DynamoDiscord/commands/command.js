@@ -6,6 +6,7 @@ const { Routes } = require('discord-api-types/v9');
 const  config = require("../config.json");
 const dbName = "Dynamo";
 const collectionName = "guild";
+const prefixs = ["!", ".", ",", ":", ";", "-", "_", "+", "*", "#", "%", "&", "|", "?", "<", ">"]
 
 
 module.exports = {
@@ -30,11 +31,7 @@ module.exports = {
                 if(interaction.options.getSubcommand() == "create")
                 {
                     // Creation de la commande personnalisée    
-                    if(!interaction.memberPermissions.has("ADMINISTRATOR"))
-                    {
-                        await dbclient.close();
-                        await interaction.reply({content:"you don't have the permission to do that !",ephemeral:true});
-                    }
+                    
 
                     const prefix = prefixs.find(pr => pr === interaction.options.get("name").value.substring(0,1)) ? interaction.options.get("name").value.substring(0,1) : null;
 

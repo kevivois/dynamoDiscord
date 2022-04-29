@@ -410,7 +410,7 @@ client.on('interactionCreate', async interaction => {
 
 
 
-        await client.commands.get(interaction.commandName).execute(interaction, options, dbclient);
+        await client.commands.get(interaction.commandName).execute(interaction, options, dbclient,client);
 
         await dbclient.close();
 

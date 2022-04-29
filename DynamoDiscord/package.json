@@ -23,9 +23,12 @@
   "homepage": "https://bitbucket.org/kevivois/dynamo#readme",
   "dependencies": {
     "@discordjs/rest": "^0.3.0",
+    "chart.js": "^3.7.1",
+    "chartjs-node-canvas": "^4.1.6",
     "discord-api-types": "^0.30.0",
     "discord.js": "^13.6.0",
     "mongodb": "^4.4.1",
-    "mongoose": "^6.2.9"
+    "mongoose": "^6.2.9",
+    "quickchart-js": "^3.0.1"
   }
 }

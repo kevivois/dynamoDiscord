@@ -1,9 +1,13 @@
 const Discord = require("discord.js");
 const { Collection, MongoClient } = require("mongodb");
 const { SlashCommandBuilder,SlashCommandStringOption  } = require('@discordjs/builders');
+const {CanvasRenderService} = require("chartjs-node-canvas"); 
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const  config = require("../config.json");
+const { default: QuickChart } = require("quickchart-js");
+const {MessageAttachment} = require("discord.js")
+const { ChartJSNodeCanvas,ChartJSNodeCanvasOptions } = require('chartjs-node-canvas');
 const dbName = "Dynamo";
 const collectionName = "guild";
 
@@ -84,6 +88,80 @@ module.exports = {
          return await {maximum:max.h,average:realAvg}
 
         }
+
+        //const chartCallBack = (ChartJS) => {};
+
+
+        /**
+         * 
+         * @param {String[]} labels 
+         * @param {number[]} data 
+         */
+        const renderChart = async (labels,data) =>
+        {
+          const config = {
+            type: 'line',
+            width:400,
+            height:400,
+            data: {
+              labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+              datasets: [{
+                label: 'Try hiding me',
+                data: [65, 59, 80, 81, 26, 55, 40],
+                fill: false,
+                borderColor: 'rgb(75, 192, 192)',
+              }]
+            },
+            options: {},
+            plugins: []
+          }
+          const c = {
+            width:400,
+            height:400,
+            type: 'bar',
+            data: {
+                labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+                datasets: [{
+                    label: '# of Votes',
+                    data: [12, 19, 3, 5, 2, 3],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+          }
+          const chartJSNodeCanvas = new ChartJSNodeCanvas(c);
+
+          const image = await chartJSNodeCanvas.renderToBuffer(c);
+          const dataUrl = await chartJSNodeCanvas.renderToDataURL(c);
+          const stream = chartJSNodeCanvas.renderToStream(c);
+          
+         
+
+          return {image,dataUrl,stream};
+          
+        }
         /**
          * 
          * @param {Discord.GuildMember} discordUser utilisateur de discord
@@ -97,10 +175,13 @@ module.exports = {
             var days = Math.ceil(difference / (1000 * 3600 * 24));
             const mostActivesHours = await activesHours(guildUser);
             const average = Math.round((guildUser.messages.length / days)*100)/100;
+
+            const chart = await renderChart(); 
            // console.log(discordUser.user.avatarURL({size:4096,format:"png"}),interaction.guild.client.user.avatarURL({format:"png",size:4096}));
             
             const embed = await {
                 "title": `Here your stats `,
+                "image": chart.image,
                 "url": "https://discordapp.com",
                 "color": 8192236,
                 "timestamp": `${new Date(Date.now()).toLocaleDateString("fr-FR")}`,
@@ -116,7 +197,7 @@ module.exports = {
                 "fields": [
                   {
                     "name": "messages",
-                    "value": `Vous avez écris ${guildUser.messages.length} messages depuis votre arrivée`
+                    "value": `Vous avez écris ${guildUser.messages.length} messages`
                   },
                   {
                     "name": "Activitée",
@@ -124,8 +205,8 @@ module.exports = {
                     Vous êtes le plus actifs entre ${mostActivesHours.maximum} et ${mostActivesHours.maximum + 3 } heures, en moyenne ${mostActivesHours.average}`
                   },
                   {
-                    "name": "🙄",
-                    "value": "an informative error should show up, and this view will remain as-is until all issues are fixed"
+                    "name": "Graphique",
+                    "value":"t"
                   },
                 ]
               }

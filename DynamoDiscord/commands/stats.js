@@ -25,7 +25,7 @@ module.exports = {
     {
         var date = new Date(Date.now());
         const prefixs = ["!",".",",",":",";","-","_","+","*","#","%","&","|","?","<",">"]
-        var sliceHours = [{h:0,l:[]},{h:3,l:[]},{h:6,l:[]},{h:9,l:[]},{h:12,l:[]},{h:15,l:[]},{h:18,l:[]},{h:21,l:[]}];
+        
 
 
       /**
@@ -33,6 +33,7 @@ module.exports = {
        */
         const activesHours = async (guildUser) =>
         {
+          var sliceHours = [{h:0,l:[]},{h:3,l:[]},{h:6,l:[]},{h:9,l:[]},{h:12,l:[]},{h:15,l:[]},{h:18,l:[]},{h:21,l:[]}];
           const messages = guildUser.messages;
 
           for(var msg of messages)
@@ -71,7 +72,7 @@ module.exports = {
             {
               max = slc;
             }
-            console.log(max.h);
+            
          })
         var sum = 0;
          max.l.forEach(m => {
@@ -85,7 +86,7 @@ module.exports = {
          const realAvg = (Math.floor(avg / 60)) + ":" + Math.floor(avg % 60) + ":" + Math.floor((avg % 60 - parseInt(avg % 60))*60);
          //console.log((avg/60 - parseInt(avg/60))*60);
          
-         return await {maximum:max.h,average:realAvg}
+         return await {sliceHours,maximum:max.h,average:realAvg}
 
         }
 
@@ -97,69 +98,24 @@ module.exports = {
          * @param {String[]} labels 
          * @param {number[]} data 
          */
-        const renderChart = async (labels,data) =>
+        const renderChart = async (data) =>
         {
-          const config = {
-            type: 'line',
-            width:400,
-            height:400,
-            data: {
-              labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
-              datasets: [{
-                label: 'Try hiding me',
-                data: [65, 59, 80, 81, 26, 55, 40],
-                fill: false,
-                borderColor: 'rgb(75, 192, 192)',
-              }]
-            },
-            options: {},
-            plugins: []
-          }
-          const c = {
-            width:400,
-            height:400,
+          const chart = {
             type: 'bar',
             data: {
-                labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-                datasets: [{
-                    label: '# of Votes',
-                    data: [12, 19, 3, 5, 2, 3],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.2)',
-                        'rgba(54, 162, 235, 0.2)',
-                        'rgba(255, 206, 86, 0.2)',
-                        'rgba(75, 192, 192, 0.2)',
-                        'rgba(153, 102, 255, 0.2)',
-                        'rgba(255, 159, 64, 0.2)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
+              labels: [0,3,6,9,12,15,18,21],
+              datasets: [{
+                label: 'Activitée ( % )',
+                data: data
+              }]
             }
           }
-          const chartJSNodeCanvas = new ChartJSNodeCanvas(c);
 
-          const image = await chartJSNodeCanvas.renderToBuffer(c);
-          const dataUrl = await chartJSNodeCanvas.renderToDataURL(c);
-          const stream = chartJSNodeCanvas.renderToStream(c);
-          
+          const encodedChart = encodeURIComponent(JSON.stringify(chart));
+          const chartUrl = `https://quickchart.io/chart?c=${encodedChart}&backgroundColor=white`;
          
 
-          return {image,dataUrl,stream};
+          return chartUrl;
           
         }
         /**
@@ -175,13 +131,21 @@ module.exports = {
             var days = Math.ceil(difference / (1000 * 3600 * 24));
             const mostActivesHours = await activesHours(guildUser);
             const average = Math.round((guildUser.messages.length / days)*100)/100;
+            
+            const chartData = [];
 
-            const chart = await renderChart(); 
+            for(const t of mostActivesHours.sliceHours)
+            {
+              
+              chartData.push(t.l.length*10);
+            }
+
+
+            const chart = await renderChart(chartData); 
            // console.log(discordUser.user.avatarURL({size:4096,format:"png"}),interaction.guild.client.user.avatarURL({format:"png",size:4096}));
             
             const embed = await {
                 "title": `Here your stats `,
-                "image": chart.image,
                 "url": "https://discordapp.com",
                 "color": 8192236,
                 "timestamp": `${new Date(Date.now()).toLocaleDateString("fr-FR")}`,
@@ -204,15 +168,65 @@ module.exports = {
                     "value": `Cela fait une moyenne ${average} messages par jour depuis votre arrivée ( ${discordUser.joinedAt.toLocaleDateString("fr-FR")}) \n
                     Vous êtes le plus actifs entre ${mostActivesHours.maximum} et ${mostActivesHours.maximum + 3 } heures, en moyenne ${mostActivesHours.average}`
                   },
-                  {
-                    "name": "Graphique",
-                    "value":"t"
-                  },
-                ]
+                ],
+                "image":{
+                  "name": "Graphique",
+                  "url":chart
+                }
               }
 
               return embed;
         };
+
+        /**
+         * 
+         * @param {WithId<Document>} guild 
+         * @param {Discord.Guild} discordGuild 
+         * @returns 
+         */
+        const usersMessagesListEmbed = async (guild,discordGuild) => {
+
+         
+         // console.log(discordUser.user.avatarURL({size:4096,format:"png"}),interaction.guild.client.user.avatarURL({format:"png",size:4096}));
+          
+         const data = [];
+
+         for(const user of guild.users)
+         {
+           data.push({user:user.id,amount:user.messages.length})
+         };
+
+         data.sort((a,b) => a.amount - b.amount);
+         data.reverse();
+        const stringDatas = [];
+         
+        for(const dt of data)
+        {
+          const user = await discordGuild.members.fetch(dt.user);
+          stringDatas.push({name:user.displayName,value:String("Messages : " + dt.amount),inline:false})
+        }
+        
+        // sequelize
+        //https://discordjs.guide/sequelize/#connection-information
+
+        const embed = await {
+          "title": `Messages leaderboard`,
+          "color": 8192236,
+          "timestamp": `${new Date(Date.now()).toLocaleDateString("fr-FR")}`,
+          "footer": {
+            "icon_url": `${discordGuild.client.user.avatarURL({format:"png",size:4096})}`,
+            "text": `${discordGuild.client.user.username} | ${new Date(Date.now()).toLocaleDateString("fr-FR")}`
+          },
+          "author": {
+            "name": `667 ekip`,
+            "url":"https://discordapp.com",
+            "icon_url": `${discordGuild.client.user.avatarURL({size:4096,format:"png"})}`
+          },
+          "fields":stringDatas,
+        }
+            
+            return embed;
+      };
 
         try
         {
@@ -222,13 +236,14 @@ module.exports = {
              /**stats command */
              
                 // personal stat
+                const guild = await dbclient.db(dbName).collection(collectionName).findOne({id:interaction.guild.id});
                 if(interaction.options.getSubcommand() === "me")
                 {
                     
                     const discordUser = interaction.member;
                     
                     
-                    const guild = await dbclient.db(dbName).collection(collectionName).findOne({id:interaction.guild.id});
+                   
 
                     if(guild.users.find(us => us.id === discordUser.id))
                     {
@@ -249,12 +264,15 @@ module.exports = {
                 }
                 else if(interaction.options.getSubcommand() === "messages")
                 {
+                  const embed = await usersMessagesListEmbed(guild,interaction.guild);
+
                     if(!interaction.memberPermissions.has("ADMINISTRATOR"))
                     {
                         await interaction.reply({content:"you don't have the permission to do that !",ephemeral:true});
                     }
-                }
 
+                    await interaction.reply({content:"\n",embeds:[embed]});
+                }
             }
             catch(error)
             {

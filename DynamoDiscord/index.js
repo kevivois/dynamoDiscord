@@ -363,7 +363,8 @@ async function CommandsConfiguration() {
                     .setDescription("list all custom commands"))
         ,
         new SlashCommandBuilder().setName("stats").setDescription("get somes statistics from the server & users")
-            .addSubcommand(cmd => cmd.setName("me").setDescription("get our stats on this server"))
+            .addSubcommand(cmd => cmd.setName("me").setDescription("get your stats"))
+            .addSubcommand(cmd => cmd.setName("messages").setDescription("get the stats of the server"))
     ];
     try {
         console.log("commands are refreshing");

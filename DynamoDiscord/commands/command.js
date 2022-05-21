@@ -61,6 +61,50 @@ module.exports = {
                 else if(interaction.options.getSubcommand() == "list")
                 {
                     //list all custom commands 
+
+                    await dbclient.connect();
+
+                    const guild = await dbclient.db(dbName).collection(collectionName).findOne({id:interaction.guild.id});
+
+                    const commands = guild.commands;
+
+                    const formatedCommands = [];
+
+                    for(const cmd of commands)
+                    {
+                        const creator = await interaction.guild.members.fetch(cmd.creator);
+                        formatedCommands.push({name:cmd.prefix+cmd.name,value:`${creator.user}`,inline:false});
+                    }
+                    
+                    const embed = await {
+                        "title": `Commands list  `,
+                        "color": 8192236,
+                        "timestamp": `${new Date(Date.now()).toLocaleDateString("fr-FR")}`,
+                        "footer": {
+                          "icon_url": `${interaction.guild.client.user.avatarURL({format:"png",size:4096})}`,
+                          "text": `${interaction.guild.client.user.username} | ${new Date(Date.now()).toLocaleDateString("fr-FR")}`
+                        },
+                        "author": {
+                          "name": `${interaction.user.username}`,
+                          "url":"https://discordapp.com",
+                          "icon_url": `${interaction.user.avatarURL({size:4096,format:"png"})}`
+                        },
+                        "fields": formatedCommands
+                      }
+
+                      await dbclient.close();
+
+                      if(guild.commands.length > 0)
+                      {
+                        return interaction.reply({embeds:[embed]});
+                      }
+                      else 
+                      {
+                          return interaction.reply({content:"pas de commandes crées"});
+                      }
+                      
+
+                    
                 }
             
             await dbclient.close();

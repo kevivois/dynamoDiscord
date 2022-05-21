@@ -18,7 +18,7 @@ const rest = new REST({ version: '9' }).setToken(config.BOT_TOKEN);
 
 const client = new Client({
     partials: ['MESSAGE', 'CHANNEL', 'REACTION'],
-    intents: ['DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILDS', 'GUILD_MEMBERS']
+    intents: ['DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'GUILDS', 'GUILD_MEMBERS',"GUILD_BANS","GUILD_PRESENCES","DIRECT_MESSAGES","GUILD_VOICE_STATES","GUILD_INVITES","GUILD_INTEGRATIONS"],
 });
 
 client.commands = new Discord.Collection();
@@ -371,7 +371,7 @@ async function CommandsConfiguration() {
 
         await rest.put(
             // Routes.applicationCommands(config.APP_ID) : in all discord servers,  
-            Routes.applicationGuildCommands(config.APP_ID, DynamoGuildId),
+            Routes.applicationCommands(config.APP_ID),
             {
                 body: GlobalCommands
             },

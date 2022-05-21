@@ -249,9 +249,8 @@ module.exports = {
             "text": `${discordGuild.client.user.username} | ${new Date(Date.now()).toLocaleDateString("fr-FR")}`
           },
           "author": {
-            "name": `667 ekip`,
-            "url":"https://discordapp.com",
-            "icon_url": `${discordGuild.client.user.avatarURL({size:4096,format:"png"})}`
+            "name": `${interaction.user.username}`,
+            "icon_url": `${interaction.user.avatarURL({size:4096,format:"png"})}`
           },
           "fields":stringDatas,
         }
@@ -286,23 +285,19 @@ module.exports = {
                     }
                     
                 }
-                else if(interaction.options.getSubcommand() === "server")
-                {
-                    if(!interaction.memberPermissions.has("ADMINISTRATOR"))
-                    {
-                        await interaction.reply({content:"you don't have the permission to do that !",ephemeral:true});
-                    }
-                }
                 else if(interaction.options.getSubcommand() === "messages")
                 {
                   const embed = await usersMessagesListEmbed(guild,interaction.guild);
-
+                  
                     if(!interaction.memberPermissions.has("ADMINISTRATOR"))
                     {
                         await interaction.reply({content:"you don't have the permission to do that !",ephemeral:true});
                     }
-
-                    await interaction.reply({content:"\n",embeds:[embed]});
+                    
+                    
+                      await interaction.reply({content:"\n",embeds:[embed]});
+                    
+                   
                 }
             }
             catch(error)

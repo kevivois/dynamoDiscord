@@ -5,11 +5,11 @@ const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
 const prefixs = ["!", ".", ",", ":", ";", "-", "_", "+", "*", "#", "%", "&", "|", "?", "<", ">"]
+const dbclient = require("./connection");
 
 const Discord = require("discord.js");
 const config = require("./config.json");
-const uri = "mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false";
-const dbclient = new MongoClient(uri);
+
 const dbName = "Dynamo";
 const collectionName = "guild";
 const DynamoGuildId = "958710845796413440";
@@ -38,8 +38,9 @@ console.log(client.commands);
 
 const addCommandsToClient = async () => {
 
+    
 
-    await dbclient.connect();
+    
 
     const collection = await dbclient.db(dbName).collection(collectionName);
     const guilds = await collection.find({});
@@ -52,6 +53,7 @@ const addCommandsToClient = async () => {
         }
     });
 
+    
 
 }
 
@@ -72,12 +74,12 @@ client.on("messageCreate", async msg => {
 
     
     if (msg.author.id == client.user.id) return;
-    await dbclient.connect();
+    
     var guild = await dbclient.db(dbName).collection(collectionName).findOne({ id: msg.guild.id });
 
     if (!guild) {
         tryConnection();
-        await dbclient.connect();
+        
 
         guild = await dbclient.db(dbName).collection(collectionName).findOne({ id: msg.guild.id });
         if (!guild) {
@@ -93,7 +95,7 @@ client.on("messageCreate", async msg => {
     var prefix = msg.content.substring(0, 1);
     var command = prefixs.filter(pr => pr === prefix) ? msg.content.substring(1, 10) : null;
 
-    if (!command) return;
+    if (!command) return 
 
 
 
@@ -104,11 +106,6 @@ client.on("messageCreate", async msg => {
 
 
         if (cmd) await client.commands.get(msg.content).execute(prefix, msg, guild, cmd);
-
-
-
-
-
     }
 
 
@@ -143,7 +140,7 @@ client.on("messageCreate", async msg => {
     // check if it's a command with personalisate prefix
 
 
-
+    
 
 
 
@@ -168,14 +165,28 @@ client.on("guildDelete", async guild => {
 })
 
 const removeGuildFromDb = async (guild) => {
-
-    await dbclient.connect();
+    try
+    {
+        
+    }
+    catch(error)
+    {
+        console.log("abceuwrhw")
+    }
+    
 
     var query = await dbclient.db(dbName).collection(collectionName).deleteOne({ "id": guild.id });
 
     console.log("removing guild from DB", query);
+    try
+    {
+        
+    }
+    catch(error)
+    {
 
-    await dbclient.close();
+    }
+    
 }
 const addGuildIntoDB = async (guild) => {
 
@@ -195,9 +206,9 @@ const addGuildIntoDB = async (guild) => {
 
         const JsonData = { id: guild.id, users: lstMembres, commands: [], data: [],createAt:Date.now()};
         
-        await dbclient.close();
+      
 
-        await dbclient.connect();
+        
 
         var db = await dbclient.db(dbName);
 
@@ -210,7 +221,7 @@ const addGuildIntoDB = async (guild) => {
 
         console.log(insert);
 
-        await dbclient.close();
+        
 
     }
     catch (error) {
@@ -227,9 +238,9 @@ const tryConnection = async () => {
 
     try {
 
-        await dbclient.close();
+        
 
-        await dbclient.connect();
+        
 
 
 
@@ -245,14 +256,14 @@ const tryConnection = async () => {
         if (collections.filter(c => c.dbName == "Dynamo").length == 0) {
             await db.createCollection(collectionName);
         }
-        await dbclient.close();
+        
 
 
         return true;
     }
     catch (error) {
         console.log(error);
-        await dbclient.close();
+        
         return false;
     }
 
@@ -261,13 +272,13 @@ const tryConnection = async () => {
 
 client.on("guildMemberAdd", async member => {
     try {
-        await dbclient.close();
+       
 
-        await dbclient.connect();
+        
 
         await addMemberIntoDB(member);
 
-        await dbclient.close();
+        
 
 
     }
@@ -280,13 +291,13 @@ client.on("guildMemberAdd", async member => {
 client.on("guildMemberRemove", async member => {
 
     try {
-        await dbclient.close();
+       
 
-        await dbclient.connect();
+        
 
         await RemoveMemberFromDB(member);
 
-        await dbclient.close();
+        
 
 
     }
@@ -298,13 +309,15 @@ client.on("guildMemberRemove", async member => {
 
 const addMemberIntoDB = async (member) => {
 
+    
+
     var db = await dbclient.db(dbName).collection(collectionName);
 
     var guild = await db.findOne({ "id": member.guild.id });
 
     var user = guild.users.find(usr => usr.id == member.id);
 
-    if (user) return;
+    if (user) return ;
 
 
     var query = await db.updateOne({ "id": member.guild.id, }, {
@@ -317,10 +330,13 @@ const addMemberIntoDB = async (member) => {
 
     console.log("inserting new user into DB :", query);
 
+    
+
 };
 
 const RemoveMemberFromDB = async (member) => {
 
+    
     var db = await dbclient.db(dbName).collection(collectionName);
 
     var query = await db.updateOne({ "id": member.guild.id }, {
@@ -332,7 +348,7 @@ const RemoveMemberFromDB = async (member) => {
     })
 
     console.log("remove user from DB", query);
-
+    
 };
 
 //###############################################################
@@ -342,9 +358,9 @@ const RemoveMemberFromDB = async (member) => {
 
 
 async function CommandsConfiguration() {
-
-    await dbclient.connect();
-
+    
+    
+    
     var guilds = await dbclient.db(dbName).collection(collectionName).find({}).toArray();
 
 
@@ -377,10 +393,15 @@ async function CommandsConfiguration() {
             },
         );
         console.log("Commands are successfully reloaded");
+
+        
+        
     }
     catch (error) {
         console.log(error);
     }
+
+    
 
 
 
@@ -390,13 +411,13 @@ async function CommandsConfiguration() {
 client.on('interactionCreate', async interaction => {
 
     await console.log(interaction.commands);
-    if (!interaction.isCommand()) return;
+    if (!interaction.isCommand()) ;
 
-    if (!client.commands.has(interaction.commandName)) return;
+    if (!client.commands.has(interaction.commandName))  ;
     try {
-        if (!interaction) return;
-        await dbclient.close();
-        await dbclient.connect();
+        if (!interaction)  return;
+       
+        
         const guild = await dbclient.db(dbName).collection(collectionName).findOne({ id: interaction.guild.id })
         let options = []
         if (client.commands.length > 0) {
@@ -412,7 +433,7 @@ client.on('interactionCreate', async interaction => {
 
         await client.commands.get(interaction.commandName).execute(interaction, options, dbclient,client);
 
-        await dbclient.close();
+        
 
 
 

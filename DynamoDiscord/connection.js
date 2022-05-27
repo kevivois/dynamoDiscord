@@ -5,6 +5,7 @@ var dbclient = null //new MongoClient(uri,{ useUnifiedTopology: true}, { useNewU
 
 function getInstance()
 {
+    
     if(dbclient == null)
     {
         dbclient = new MongoClient(uri,{ useUnifiedTopology: true}, { useNewUrlParser: true }, { keepAlive: 1});

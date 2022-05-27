@@ -5,11 +5,10 @@ const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const fs = require('fs');
 const prefixs = ["!", ".", ",", ":", ";", "-", "_", "+", "*", "#", "%", "&", "|", "?", "<", ">"]
-const dbclient = require("./connection");
+var dbclient = require("./connection");
 
 const Discord = require("discord.js");
 const config = require("./config.json");
-
 const dbName = "Dynamo";
 const collectionName = "guild";
 const DynamoGuildId = "958710845796413440";
@@ -38,7 +37,7 @@ console.log(client.commands);
 
 const addCommandsToClient = async () => {
 
-    
+    dbclient = require("./connection");
 
     
 
@@ -71,7 +70,7 @@ client.on("ready", () => {
 
 // ajout du message dans la BD
 client.on("messageCreate", async msg => {
-
+    dbclient = require("./connection");
     
     if (msg.author.id == client.user.id) return;
     
@@ -152,7 +151,7 @@ client.on("messageCreate", async msg => {
 
 client.on("guildCreate", guild => {
 
-
+    
     addGuildIntoDB(guild);
 
 
@@ -165,31 +164,17 @@ client.on("guildDelete", async guild => {
 })
 
 const removeGuildFromDb = async (guild) => {
-    try
-    {
-        
-    }
-    catch(error)
-    {
-        console.log("abceuwrhw")
-    }
-    
+    dbclient = require("./connection");
 
     var query = await dbclient.db(dbName).collection(collectionName).deleteOne({ "id": guild.id });
 
     console.log("removing guild from DB", query);
-    try
-    {
-        
-    }
-    catch(error)
-    {
-
-    }
+  
     
 }
 const addGuildIntoDB = async (guild) => {
 
+    dbclient = require("./connection");
     try {
         var lstMembres = [];
 
@@ -238,7 +223,7 @@ const tryConnection = async () => {
 
     try {
 
-        
+        dbclient = require("./connection");
 
         
 
@@ -309,7 +294,7 @@ client.on("guildMemberRemove", async member => {
 
 const addMemberIntoDB = async (member) => {
 
-    
+    dbclient = require("./connection");
 
     var db = await dbclient.db(dbName).collection(collectionName);
 
@@ -336,7 +321,7 @@ const addMemberIntoDB = async (member) => {
 
 const RemoveMemberFromDB = async (member) => {
 
-    
+    dbclient = require("./connection");
     var db = await dbclient.db(dbName).collection(collectionName);
 
     var query = await db.updateOne({ "id": member.guild.id }, {
@@ -360,7 +345,7 @@ const RemoveMemberFromDB = async (member) => {
 async function CommandsConfiguration() {
     
     
-    
+    dbclient = require("./connection");
     var guilds = await dbclient.db(dbName).collection(collectionName).find({}).toArray();
 
 
@@ -409,7 +394,7 @@ async function CommandsConfiguration() {
 }
 
 client.on('interactionCreate', async interaction => {
-
+    dbclient = require("./connection");
     await console.log(interaction.commands);
     if (!interaction.isCommand()) ;
 

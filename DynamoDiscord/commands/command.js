@@ -24,8 +24,7 @@ module.exports = {
     {    
         try {
         //if(interaction.options)
-            await dbclient.close();
-            await dbclient.connect();
+            
             
            
                 if(interaction.options.getSubcommand() == "create")
@@ -37,7 +36,7 @@ module.exports = {
 
                     if(!prefix)
                     {
-                        await dbclient.close();
+                       
                         return interaction.reply("invalid prefix !");
                     }
 
@@ -54,7 +53,7 @@ module.exports = {
                     
                     var insertCommand = await dbclient.db(dbName).collection(collectionName).updateOne({"id":interaction.guild.id},{$push:{"commands":command}});
                     console.log("created a new command into DB guild " + interaction.guild.name,Date.now());
-                    await dbclient.close();
+                    
                     await client.commands.set(interaction.options.get("name").value.toLowerCase(),require("./custom"));
                     await interaction.reply({content:"command well created !",ephemeral:true});
                 }
@@ -62,7 +61,7 @@ module.exports = {
                 {
                     //list all custom commands 
 
-                    await dbclient.connect();
+                   
 
                     const guild = await dbclient.db(dbName).collection(collectionName).findOne({id:interaction.guild.id});
 
@@ -92,7 +91,7 @@ module.exports = {
                         "fields": formatedCommands
                       }
 
-                      await dbclient.close();
+                      
 
                       if(guild.commands.length > 0)
                       {
@@ -107,13 +106,13 @@ module.exports = {
                     
                 }
             
-            await dbclient.close();
+            
 
         }
         catch(error)
         {
             console.log(error);
-            await dbclient.close();
+            
             await interaction.reply({content:"error !",ephemeral:true});
         }
          

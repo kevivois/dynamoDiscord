@@ -154,6 +154,7 @@ module.exports = {
             {
               
               chartData.push((t.l.length/totalMessages)*100);
+              
             }
 
 

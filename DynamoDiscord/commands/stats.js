@@ -61,17 +61,17 @@ module.exports = {
               max = slc;
             }
          })
-        var sum = 0;    // sommme des heures des messages en minutes
-         max.l.forEach(m => {   // boucle sur la tranche d'heure avec le plus de messages
-          // console.log (new Date(m.t).toTimeString());
-          date = new Date(m.t);
-           sum += (date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60);    // ajout de l'heure du messages
-           
-         })
-         var avg = sum / max.l.length - 1;    // moyenne de l'heure en minute
-         
-         const realAvg = (Math.floor(avg / 60)) + ":" + Math.floor(avg % 60) + ":" + Math.floor((avg % 60 - parseInt(avg % 60))*60);   // moyennne en heures
-         return await {sliceHours,maximum:max.h,average:realAvg}
+          var sum = 0;    // sommme des heures des messages en minutes
+          max.l.forEach(m => {   // boucle sur la tranche d'heure avec le plus de messages
+            // console.log (new Date(m.t).toTimeString());
+            date = new Date(m.t);
+            sum += (date.getHours() * 60 + date.getMinutes() + date.getSeconds() / 60);    // ajout de l'heure du messages
+            
+          })
+          var avg = sum / max.l.length - 1;    // moyenne de l'heure en minute
+          
+          const realAvg = (Math.floor(avg / 60)) + ":" + Math.floor(avg % 60) + ":" + Math.floor((avg % 60 - parseInt(avg % 60))*60);   // moyennne en heures
+          return await {sliceHours,maximum:max.h,average:realAvg}
         }
 
         /**

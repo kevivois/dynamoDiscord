@@ -2,8 +2,8 @@
 // Importations utiles pour le projet
 //=====================================
 
-const Discord = require("discord.js");           
-const { Collection, MongoClient } = require("mongodb");  
+const Discord = require("discord.js");
+const { Collection, MongoClient } = require("mongodb");
 const { SlashCommandBuilder,SlashCommandStringOption  } = require('@discordjs/builders');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
@@ -19,24 +19,24 @@ module.exports = {
     args:["prefix","name","content"],       // arguments en parametress
     /**
      * Parametres
-     * @param {Discord.CommandInteraction} interaction 
-     * @param {String[]} args 
+     * @param {Discord.CommandInteraction} interaction
+     * @param {String[]} args
      * @param {MongoClient} dbclient
      * @param {Discord.Client} client
      */
     async execute(interaction,args,dbclient,client)     // fonction d'execution
-    {    
+    {
         try {
                 if(interaction.options.getSubcommand() == "create") // test de la sous-commande
                 {
                       // creation de commandes personalisées
-                    
+
                         // test si le prefix de la commande crée est dans la liste de prefix prédefinie
                     const prefix = prefixs.find(pr => pr === interaction.options.get("name").value.substring(0,1)) ? interaction.options.get("name").value.substring(0,1) : null;
 
                     if(!prefix)
                     {
-                       
+
                         return interaction.reply("invalid prefix !");       // si le prefix n'est pas correct,
                     }
                     // test si la commande qu'on veut crée existe déjà
@@ -50,10 +50,10 @@ module.exports = {
                     const commandWithOutPrefix = interaction.options.get("name").value.toLowerCase().substring(1,10); // commande sans le prefix
 
                     const command = {prefix:prefix,name:commandWithOutPrefix,description:description,content:interaction.options.get("content").value,creator:interaction.user.id};     // object representant la commande qui sera ajoutée
-                    
+
                     var insertCommand = await dbclient.db(dbName).collection(collectionName).updateOne({"id":interaction.guild.id},{$push:{"commands":command}});       // insertion de la commande dans la BDD
-                    console.log("created a new command into DB guild " + interaction.guild.name,Date.now());        
-                    
+                    console.log("created a new command into DB guild " + interaction.guild.name,Date.now());
+
                     await client.commands.set(interaction.options.get("name").value.toLowerCase(),require("./custom"));     // ajout de la commande dans la liste de commande du bot discord
                     await interaction.reply({content:"command well created !",ephemeral:true});
                 }
@@ -68,7 +68,7 @@ module.exports = {
                         const creator = await interaction.guild.members.fetch(cmd.creator);
                         formatedCommands.push({name:cmd.prefix+cmd.name,value:`${creator.user}`,inline:false});     // ajout de chaque command dans la liste d'affichage
                     }
-                    
+
                     const embed = await {       // création de l'embed d'affichages des commmandes
                         "title": `Commands list  `,
                         "color": 8192236,
@@ -88,18 +88,18 @@ module.exports = {
                       {
                         return interaction.reply({embeds:[embed]});
                       }
-                      else 
+                      else
                       {
                           return interaction.reply({content:"pas de commandes crées"});
-                      }  
+                      }
                 }
         }
         catch(error)
         {
             console.log(error);     // si'l y a erreur , retourner un message d'erreur
-            
+
             await interaction.reply({content:"error !",ephemeral:true});
         }
     }
 
-}       // ne pas oublier l'accolade de fin 
+}       // ne pas oublier l'accolade de fin

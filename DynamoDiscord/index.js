@@ -11,7 +11,7 @@ const fs = require('fs');                                                       
 const prefixs = ["!", ".", ",", ":", ";", "-", "_", "+", "*", "#", "%", "&", "|", "?", "<", ">"]// liste des préfixs autorisés pour la création de commandes personalisées
 var dbclient = require("./connection");
 
-const Discord = require("discord.js");                                                          
+const Discord = require("discord.js");                                                          //imortation de discord
 const config = require("./config.json");                                                        // importation du fichier contenant les variables globales
 const dbName = "Dynamo";                                                                        // nom de la BDD
 const collectionName = "guild";                                                                 // nom de la collection dans la BDD
@@ -54,11 +54,12 @@ const addCommandsToClient = async () => {
 
     const collection = await dbclient.db(dbName).collection(collectionName);        // recuperation de la collection
     const guilds = await collection.find({});                                       // recuperation de touts les enregistrements, serveurs dans la collection
-
+    
     guilds.forEach(async guild => { // boucle sur touts les serveurs
         for (cmd of guild.commands) {       // boucle sur toutes les commandes
             await client.commands.set(cmd.prefix + cmd.name, require("./commands/custom"));     // ajout de la commande dans la liste 
             //avec comme commande, le fichier de commande personalisé "custom"
+            
         }
     });
 }
@@ -90,7 +91,16 @@ client.on("messageCreate", async msg => {       // fonction qui gère lorsqu'un 
     const commands = guild.commands;        // recuperation des commandes existentes dans la BDD , pour le serveur concerné
     if (commands.filter(cmd => cmd.prefix === prefix && cmd.name === command).length > 0) {     // recherche si la commande existe, si oui , renvoyé le contenu
         const cmd = commands.find(cmd => cmd.prefix === prefix && cmd.name === command);        // recuperation de la commande de la BDD
-        if (cmd) await client.commands.get(msg.content).execute(prefix, msg, guild, cmd);       // si elle existe , execution de la commande
+        try
+        {
+            if (cmd) await client.commands.get(msg.content).execute(prefix, msg, guild, cmd);  
+        }
+        catch(error)
+        {
+            client.commands.set(msg.content,require("./commands/custom"));
+            if (cmd) await client.commands.get(msg.content).execute(prefix, msg, guild, cmd);  
+        }
+             // si elle existe , execution de la commande
     }
     var users = guild.users;        //recuperation des utilisateurs de la guild
     var user;
